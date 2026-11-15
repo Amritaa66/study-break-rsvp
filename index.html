@@ -84,7 +84,7 @@
       const isDoor = location.hash === "#door";
       const isConfirmation = location.hash === "#confirmation";
       const isCheckIns = location.hash === "#check-ins";
-      $("rsvp-view").classList.toggle("hidden", isDoor || isConfirmation);
+      $("rsvp-view").classList.toggle("hidden", isDoor || isConfirmation || isCheckIns);
       $("confirmation-view").classList.toggle("hidden", !isConfirmation);
       $("door-view").classList.toggle("hidden", !isDoor);
       $("check-ins-view").classList.toggle("hidden", !isCheckIns);
