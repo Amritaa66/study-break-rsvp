@@ -59,6 +59,16 @@
       <div class="msg" id="door-msg" aria-live="polite"></div>
     </section>
 
+    <section id="door-confirmation-view" class="hidden">
+      <h1>✅ Checked in</h1>
+      <div class="success">
+        <p><strong id="door-confirmation-name"></strong></p>
+        <p id="door-confirmation-cup"></p>
+      </div>
+      <button id="another-check-in-btn">Check in someone else</button>
+      <button class="secondary" id="confirmation-check-ins-btn">View check-ins</button>
+    </section>
+
     <section id="check-ins-view" class="hidden">
       <h1>People checked in</h1>
       <div class="big" id="check-ins-count">-</div>
@@ -82,10 +92,12 @@
     function route() {
       const isDoor = location.hash === "#door";
       const isConfirmation = location.hash === "#confirmation";
+      const isDoorConfirmation = location.hash === "#door-confirmation";
       const isCheckIns = location.hash === "#check-ins";
-      $("rsvp-view").classList.toggle("hidden", isDoor || isConfirmation || isCheckIns);
+      $("rsvp-view").classList.toggle("hidden", isDoor || isConfirmation || isDoorConfirmation || isCheckIns);
       $("confirmation-view").classList.toggle("hidden", !isConfirmation);
       $("door-view").classList.toggle("hidden", !isDoor);
+      $("door-confirmation-view").classList.toggle("hidden", !isDoorConfirmation);
       $("check-ins-view").classList.toggle("hidden", !isCheckIns);
       clearInterval(statsTimer);
       if (isDoor) {
@@ -158,15 +170,30 @@
       if (error) {
         $("door-msg").textContent = "Could not check in. Try again.";
         console.error(error);
+        $("check-in-btn").disabled = false;
       } else if (data.cup === null) {
-        $("door-msg").textContent = "Checked in — no cups left. " + (data.rsvp ? "RSVP'd." : "Walk-in.");
+        $("door-confirmation-name").textContent = name;
+        $("door-confirmation-cup").textContent = "Checked in — no cup available.";
+        $("check-in-name").value = "";
+        location.hash = "door-confirmation";
       } else {
-        $("door-msg").textContent = "Cup #" + data.cup + " ✅ " + (data.rsvp ? "RSVP'd" : "Walk-in");
+        $("door-confirmation-name").textContent = name;
+        $("door-confirmation-cup").textContent = "Cup #" + data.cup + " given.";
+        $("check-in-name").value = "";
+        location.hash = "door-confirmation";
       }
 
-      $("check-in-name").value = "";
       await loadStats();
       setTimeout(() => { $("door-msg").textContent = ""; }, 3000);
+    });
+
+    $("another-check-in-btn").addEventListener("click", () => {
+      location.hash = "door";
+      setTimeout(() => $("check-in-name").focus(), 0);
+    });
+
+    $("confirmation-check-ins-btn").addEventListener("click", () => {
+      location.hash = "check-ins";
     });
 
     $("view-check-ins-btn").addEventListener("click", () => {
