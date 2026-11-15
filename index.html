@@ -75,9 +75,9 @@
       <div class="sub">people checked in</div>
       <input id="check-ins-search" type="search" placeholder="Search names" autocomplete="off">
       <button class="secondary" id="refresh-check-ins-btn">Refresh list</button>
+      <button class="secondary" id="back-to-door-btn">Back to door check-in</button>
       <div class="msg" id="check-ins-msg" aria-live="polite"></div>
       <div id="check-ins-list"></div>
-      <p class="sub"><a href="#door">back to door check-in</a></p>
     </section>
   </main>
 
@@ -201,6 +201,9 @@
     });
 
     $("refresh-check-ins-btn").addEventListener("click", loadCheckIns);
+    $("back-to-door-btn").addEventListener("click", () => {
+      location.hash = "door";
+    });
     $("check-ins-search").addEventListener("input", renderCheckIns);
 
     let checkIns = [];
