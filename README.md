@@ -51,4 +51,6 @@ The frontend uses the Supabase project configured in `index.html` and the follow
 
 ## Security limitation
 
-The public Supabase anon key can currently call the check-in RPC, and the `#door` route is not protected. Someone who discovers the route could submit fake names or consume cups. Before a real event, add a door PIN, organiser authentication, or another server-side access control mechanism.
+The public Supabase anon key can currently call the check-in RPC, and the `#door` route is not protected. Someone who discovers the route could submit fake names or consume cups. Before a real event, add Supabase organiser authentication and require an authenticated organiser session for the door functions.
+
+Do not add a PIN directly to `index.html`: a client-side PIN would be visible in the page source. A shared PIN should only be implemented through a server-side verification flow if organiser accounts are not practical.
