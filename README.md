@@ -1,6 +1,6 @@
 # Study Break Night
 
-## Use the app
+## Use the website
 
 For attendees: [RSVP here](https://amritaa66.github.io/study-break-rsvp/)
 
