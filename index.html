@@ -32,6 +32,17 @@
     .check-in-row { border: 2px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 10px; background: #fff; }
     .check-in-row strong { display: block; font-size: 18px; }
     .check-in-meta { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .door-summary { color: var(--muted); text-align: center; margin: 14px 0 20px; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .stat { background: #fff; border: 2px solid var(--ink); border-radius: 16px; padding: 14px; text-align: center; }
+    .stat-number { display: block; font-size: 38px; font-weight: 850; line-height: 1; }
+    .stat-label { display: block; color: var(--muted); font-size: 14px; margin-top: 6px; }
+    .list-tools { position: sticky; top: 0; z-index: 2; background: var(--cream); padding: 8px 0 10px; }
+    .badge { display: inline-block; border-radius: 999px; padding: 3px 8px; font-size: 12px; font-weight: 750; }
+    .badge-rsvp { background: #e4efff; color: #23558f; }
+    .badge-walk-in { background: #f0e5ff; color: #684098; }
+    .badge-cup { background: #e6f6df; color: #287a35; }
+    .badge-no-cup { background: #eee; color: #666; }
     .secondary { background: #fff; box-shadow: 0 2px 0 var(--ink); }
     .hidden { display: none; }
     a { color: var(--tea); }
@@ -64,10 +75,13 @@
     </section>
 
     <section id="door-view" class="hidden">
+      <p class="brand">Organiser mode</p>
       <h1>Door check-in</h1>
-      <div class="big" id="checked-in">-</div>
-      <div class="sub">checked in</div>
-      <p class="sub"><span id="rsvps">-</span> RSVPs · <span id="given">-</span> cups given · <span id="remaining">-</span> cups remaining</p>
+      <div class="stats-grid">
+        <div class="stat"><span class="stat-number" id="checked-in">-</span><span class="stat-label">checked in</span></div>
+        <div class="stat"><span class="stat-number" id="remaining">-</span><span class="stat-label">cups left</span></div>
+      </div>
+      <p class="door-summary"><span id="rsvps">-</span> RSVPs · <span id="given">-</span> cups given</p>
       <div class="stop hidden" id="stop">NO MORE CUPS</div>
       <input id="check-in-name" type="text" placeholder="Attendee name" maxlength="60" autocomplete="off">
       <button id="check-in-btn">Check in</button>
@@ -76,6 +90,7 @@
     </section>
 
     <section id="door-confirmation-view" class="hidden">
+      <p class="brand">Organiser mode</p>
       <h1>✅ Checked in</h1>
       <div class="success">
         <p><strong id="door-confirmation-name"></strong></p>
@@ -86,12 +101,15 @@
     </section>
 
     <section id="check-ins-view" class="hidden">
+      <p class="brand">Organiser mode</p>
       <h1>People checked in</h1>
       <div class="big" id="check-ins-count">-</div>
       <div class="sub">people checked in</div>
-      <input id="check-ins-search" type="search" placeholder="Search names" autocomplete="off">
-      <button class="secondary" id="refresh-check-ins-btn">Refresh list</button>
-      <button class="secondary" id="back-to-door-btn">Back to door check-in</button>
+      <div class="list-tools">
+        <input id="check-ins-search" type="search" placeholder="Search names" autocomplete="off">
+        <button class="secondary" id="refresh-check-ins-btn">Refresh list</button>
+        <button class="secondary" id="back-to-door-btn">Back to door check-in</button>
+      </div>
       <div class="msg" id="check-ins-msg" aria-live="polite"></div>
       <div id="check-ins-list"></div>
     </section>
@@ -255,12 +273,16 @@
           minute: "2-digit"
         });
         const type = person.rsvp_id === null ? "Walk-in" : "RSVP'd";
+        const typeClass = person.rsvp_id === null ? "badge-walk-in" : "badge-rsvp";
         const cup = person.cup_number !== null && person.cup_number !== undefined
           ? "Cup #" + person.cup_number
           : "No cup";
+        const cupClass = person.cup_number !== null && person.cup_number !== undefined
+          ? "badge-cup"
+          : "badge-no-cup";
         return `<div class="check-in-row">
           <strong>${escapeHtml(person.name)}</strong>
-          <div class="check-in-meta">${type} · ${cup} · ${time}</div>
+          <div class="check-in-meta"><span class="badge ${typeClass}">${type}</span> <span class="badge ${cupClass}">${cup}</span> · ${time}</div>
         </div>`;
       }).join("");
     }
