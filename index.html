@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Study Break Night</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; background: #fffbea; color: #222; }
+    main { max-width: 420px; margin: 0 auto; }
+    h1 { margin-top: 0; }
+    input, button { width: 100%; font-size: 18px; padding: 14px; border-radius: 10px; border: 2px solid #222; margin-top: 10px; }
+    button { background: #ffcc33; font-weight: bold; cursor: pointer; }
+    button:disabled { background: #ddd; cursor: not-allowed; }
+    .msg { margin-top: 14px; font-size: 18px; min-height: 28px; }
+    .big { font-size: 64px; font-weight: bold; text-align: center; margin: 10px 0 0; }
+    .sub { text-align: center; color: #555; }
+    .stop { background: #d33; color: #fff; text-align: center; font-size: 28px; font-weight: bold; padding: 20px; border-radius: 10px; margin-top: 14px; }
+    .success { background: #dff6df; border: 2px solid #287a35; padding: 18px; border-radius: 10px; font-size: 18px; }
+    .hidden { display: none; }
+    a { color: #555; }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="rsvp-view">
+      <h1>🧋 Study Break Night</h1>
+      <p>Free bubble tea + snacks!<br>📍 COM1 foyer<br>🕖 7pm to 9pm, night before finals</p>
+      <input id="name" type="text" placeholder="Your name" maxlength="60" autocomplete="name">
+      <button id="rsvp-btn">RSVP</button>
+      <div class="msg" id="rsvp-msg" aria-live="polite"></div>
+      <p style="font-size:14px;color:#555">RSVP helps us order enough food. Cups are first come first served at the door (150 only).</p>
+    </section>
+
+    <section id="confirmation-view" class="hidden">
+      <h1>✅ RSVP confirmed</h1>
+      <div class="success">
+        <p><strong id="confirmation-name">You’re on the list!</strong></p>
+        <p>See you at the COM1 foyer from 7pm to 9pm.</p>
+      </div>
+      <p>Cups are first come, first served. Your RSVP helps us estimate how much food to order, but it does not reserve a cup.</p>
+      <button id="another-rsvp-btn">RSVP someone else</button>
+    </section>
+
+    <section id="door-view" class="hidden">
+      <h1>Door check-in</h1>
+      <div class="big" id="checked-in">-</div>
+      <div class="sub">checked in</div>
+      <p class="sub"><span id="rsvps">-</span> RSVPs · <span id="given">-</span> cups given · <span id="remaining">-</span> cups remaining</p>
+      <div class="stop hidden" id="stop">NO MORE CUPS</div>
+      <input id="check-in-name" type="text" placeholder="Attendee name" maxlength="60" autocomplete="off">
+      <button id="check-in-btn">Check in</button>
+      <div class="msg" id="door-msg" aria-live="polite"></div>
+      <p class="sub"><a href="./">back to RSVP page</a></p>
+    </section>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://hcqacogyoffowbmambhb.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_kVuTaBx3QQ07PH33pZQ0hw_bv9LP6tX";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const $ = (id) => document.getElementById(id);
+    let statsTimer = null;
+
+    function route() {
+      const isDoor = location.hash === "#door";
+      const isConfirmation = location.hash === "#confirmation";
+      $("rsvp-view").classList.toggle("hidden", isDoor || isConfirmation);
+      $("confirmation-view").classList.toggle("hidden", !isConfirmation);
+      $("door-view").classList.toggle("hidden", !isDoor);
+      clearInterval(statsTimer);
+      if (isDoor) {
+        loadStats();
+        statsTimer = setInterval(loadStats, 5000);
+      }
+    }
+    window.addEventListener("hashchange", route);
+    route();
+
+    $("rsvp-btn").addEventListener("click", async () => {
+      const name = $("name").value.trim();
+      if (!name) {
+        $("rsvp-msg").textContent = "Please enter your name 🙏";
+        return;
+      }
+
+      $("rsvp-btn").disabled = true;
+      $("rsvp-msg").textContent = "Submitting...";
+      const { error } = await db.from("rsvps").insert({ name });
+
+      if (error) {
+        $("rsvp-btn").disabled = false;
+        $("rsvp-msg").textContent = "Something went wrong, please try again.";
+        console.error(error);
+        return;
+      }
+
+      sessionStorage.setItem("rsvpName", name);
+      $("confirmation-name").textContent = name;
+      $("name").value = "";
+      $("rsvp-btn").disabled = false;
+      location.hash = "confirmation";
+    });
+
+    $("confirmation-name").textContent = sessionStorage.getItem("rsvpName") || "You’re on the list!";
+    $("another-rsvp-btn").addEventListener("click", () => {
+      location.hash = "";
+      $("confirmation-name").textContent = "You’re on the list!";
+    });
+
+    async function loadStats() {
+      const { data, error } = await db.rpc("get_stats");
+      if (error || !data) {
+        $("door-msg").textContent = "Can't load stats (check wifi)";
+        $("check-in-btn").disabled = true;
+        return;
+      }
+
+      $("given").textContent = data.given;
+      $("rsvps").textContent = data.rsvps;
+      $("checked-in").textContent = data.checked_in;
+      $("remaining").textContent = Math.max(0, data.max - data.given);
+      const out = data.given >= data.max;
+      $("stop").classList.toggle("hidden", !out);
+      $("check-in-btn").disabled = false;
+    }
+
+    $("check-in-btn").addEventListener("click", async () => {
+      const name = $("check-in-name").value.trim();
+      if (!name) {
+        $("door-msg").textContent = "Enter a name first.";
+        return;
+      }
+
+      $("check-in-btn").disabled = true;
+      $("door-msg").textContent = "Checking in...";
+      const { data, error } = await db.rpc("check_in", { p_name: name });
+
+      if (error) {
+        $("door-msg").textContent = "Could not check in. Try again.";
+        console.error(error);
+      } else if (data.cup === null) {
+        $("door-msg").textContent = "Checked in — no cups left. " + (data.rsvp ? "RSVP'd." : "Walk-in.");
+      } else {
+        $("door-msg").textContent = "Cup #" + data.cup + " ✅ " + (data.rsvp ? "RSVP'd" : "Walk-in");
+      }
+
+      $("check-in-name").value = "";
+      await loadStats();
+      setTimeout(() => { $("door-msg").textContent = ""; }, 3000);
+    });
+  </script>
+</body>
+</html>
