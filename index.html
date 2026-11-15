@@ -18,6 +18,10 @@
     .sub { text-align: center; color: #555; }
     .stop { background: #d33; color: #fff; text-align: center; font-size: 28px; font-weight: bold; padding: 20px; border-radius: 10px; margin-top: 14px; }
     .success { background: #dff6df; border: 2px solid #287a35; padding: 18px; border-radius: 10px; font-size: 18px; }
+    .check-in-row { border: 2px solid #ddd; border-radius: 10px; padding: 12px; margin-top: 10px; background: #fff; }
+    .check-in-row strong { display: block; font-size: 18px; }
+    .check-in-meta { color: #666; font-size: 14px; margin-top: 4px; }
+    .secondary { background: #fff; }
     .hidden { display: none; }
     a { color: #555; }
   </style>
@@ -51,8 +55,20 @@
       <div class="stop hidden" id="stop">NO MORE CUPS</div>
       <input id="check-in-name" type="text" placeholder="Attendee name" maxlength="60" autocomplete="off">
       <button id="check-in-btn">Check in</button>
+      <button class="secondary" id="view-check-ins-btn">View check-ins</button>
       <div class="msg" id="door-msg" aria-live="polite"></div>
       <p class="sub"><a href="./">back to RSVP page</a></p>
+    </section>
+
+    <section id="check-ins-view" class="hidden">
+      <h1>People checked in</h1>
+      <div class="big" id="check-ins-count">-</div>
+      <div class="sub">people checked in</div>
+      <input id="check-ins-search" type="search" placeholder="Search names" autocomplete="off">
+      <button class="secondary" id="refresh-check-ins-btn">Refresh list</button>
+      <div class="msg" id="check-ins-msg" aria-live="polite"></div>
+      <div id="check-ins-list"></div>
+      <p class="sub"><a href="#door">back to door check-in</a></p>
     </section>
   </main>
 
@@ -67,14 +83,17 @@
     function route() {
       const isDoor = location.hash === "#door";
       const isConfirmation = location.hash === "#confirmation";
+      const isCheckIns = location.hash === "#check-ins";
       $("rsvp-view").classList.toggle("hidden", isDoor || isConfirmation);
       $("confirmation-view").classList.toggle("hidden", !isConfirmation);
       $("door-view").classList.toggle("hidden", !isDoor);
+      $("check-ins-view").classList.toggle("hidden", !isCheckIns);
       clearInterval(statsTimer);
       if (isDoor) {
         loadStats();
         statsTimer = setInterval(loadStats, 5000);
       }
+      if (isCheckIns) loadCheckIns();
     }
     window.addEventListener("hashchange", route);
     route();
@@ -151,6 +170,64 @@
       await loadStats();
       setTimeout(() => { $("door-msg").textContent = ""; }, 3000);
     });
+
+    $("view-check-ins-btn").addEventListener("click", () => {
+      location.hash = "check-ins";
+    });
+
+    $("refresh-check-ins-btn").addEventListener("click", loadCheckIns);
+    $("check-ins-search").addEventListener("input", renderCheckIns);
+
+    let checkIns = [];
+
+    async function loadCheckIns() {
+      $("check-ins-msg").textContent = "Loading...";
+      const { data, error } = await db.rpc("get_check_ins");
+      if (error) {
+        $("check-ins-msg").textContent = "Could not load check-ins. Check the organiser connection.";
+        console.error(error);
+        return;
+      }
+
+      checkIns = data || [];
+      $("check-ins-count").textContent = checkIns.length;
+      $("check-ins-msg").textContent = "";
+      renderCheckIns();
+    }
+
+    function renderCheckIns() {
+      const query = $("check-ins-search").value.trim().toLowerCase();
+      const visible = checkIns.filter((person) => person.name.toLowerCase().includes(query));
+      const list = $("check-ins-list");
+
+      if (!visible.length) {
+        list.innerHTML = '<p class="sub">No check-ins found.</p>';
+        return;
+      }
+
+      list.innerHTML = visible.map((person) => {
+        const time = new Date(person.checked_in_at).toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit"
+        });
+        const type = person.rsvp_id === null ? "Walk-in" : "RSVP'd";
+        const cup = person.received_cup ? "Cup given" : "No cup";
+        return `<div class="check-in-row">
+          <strong>${escapeHtml(person.name)}</strong>
+          <div class="check-in-meta">${type} · ${cup} · ${time}</div>
+        </div>`;
+      }).join("");
+    }
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>'"]/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;"
+      }[character]));
+    }
   </script>
 </body>
 </html>
