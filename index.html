@@ -106,7 +106,6 @@
       }
 
       $("rsvp-btn").disabled = true;
-      $("rsvp-msg").textContent = "Submitting...";
       const { error } = await db.from("rsvps").insert({ name });
 
       if (error) {
