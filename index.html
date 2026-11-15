@@ -7,43 +7,59 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; background: #fffbea; color: #222; }
-    main { max-width: 420px; margin: 0 auto; }
-    h1 { margin-top: 0; }
-    input, button { width: 100%; font-size: 18px; padding: 14px; border-radius: 10px; border: 2px solid #222; margin-top: 10px; }
-    button { background: #ffcc33; font-weight: bold; cursor: pointer; }
+    :root { --cream: #fffbea; --ink: #241f1a; --tea: #75452b; --yellow: #ffcc33; --muted: #756b62; --line: #ded6ca; }
+    body { font-family: system-ui, sans-serif; margin: 0; min-height: 100vh; padding: 24px 16px; background: radial-gradient(circle at top right, #ffe9a6 0, transparent 30%), var(--cream); color: var(--ink); }
+    main { max-width: 460px; margin: 0 auto; }
+    section { animation: appear 180ms ease-out; }
+    h1 { margin: 0; font-size: clamp(32px, 9vw, 48px); line-height: 1.05; letter-spacing: -1.5px; }
+    p { line-height: 1.45; }
+    input, button { width: 100%; font-size: 18px; padding: 15px 16px; border-radius: 14px; border: 2px solid var(--ink); margin-top: 10px; }
+    input { background: #fff; }
+    input:focus { outline: 4px solid #ffe28a; outline-offset: 1px; }
+    button { background: var(--yellow); font-weight: 800; cursor: pointer; box-shadow: 0 3px 0 var(--ink); transition: transform 120ms ease, box-shadow 120ms ease; }
+    button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
     button:disabled { background: #ddd; cursor: not-allowed; }
-    .msg { margin-top: 14px; font-size: 18px; min-height: 28px; }
+    .msg { margin-top: 14px; font-size: 18px; min-height: 28px; color: var(--tea); }
     .big { font-size: 64px; font-weight: bold; text-align: center; margin: 10px 0 0; }
-    .sub { text-align: center; color: #555; }
-    .stop { background: #d33; color: #fff; text-align: center; font-size: 28px; font-weight: bold; padding: 20px; border-radius: 10px; margin-top: 14px; }
-    .success { background: #dff6df; border: 2px solid #287a35; padding: 18px; border-radius: 10px; font-size: 18px; }
-    .check-in-row { border: 2px solid #ddd; border-radius: 10px; padding: 12px; margin-top: 10px; background: #fff; }
+    .sub { text-align: center; color: var(--muted); }
+    .brand { color: var(--tea); font-weight: 800; letter-spacing: .04em; text-transform: uppercase; font-size: 13px; margin: 0 0 12px; }
+    .event-card { background: rgba(255, 255, 255, .78); border: 2px solid var(--ink); border-radius: 22px; padding: 24px; box-shadow: 7px 7px 0 var(--ink); }
+    .event-card p { font-size: 18px; margin-bottom: 22px; }
+    .note { color: var(--muted); font-size: 14px; margin-bottom: 0; }
+    .success { background: #e6f6df; border: 2px solid #287a35; padding: 20px; border-radius: 16px; font-size: 18px; }
+    .success p { margin: 0 0 8px; }
+    .success p:last-child { margin-bottom: 0; }
+    .check-in-row { border: 2px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 10px; background: #fff; }
     .check-in-row strong { display: block; font-size: 18px; }
-    .check-in-meta { color: #666; font-size: 14px; margin-top: 4px; }
-    .secondary { background: #fff; }
+    .check-in-meta { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .secondary { background: #fff; box-shadow: 0 2px 0 var(--ink); }
     .hidden { display: none; }
-    a { color: #555; }
+    a { color: var(--tea); }
+    @keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
   <main>
     <section id="rsvp-view">
-      <h1>🧋 Study Break Night</h1>
-      <p>Free bubble tea + snacks!<br>📍 COM1 foyer<br>🕖 7pm to 9pm, night before finals</p>
-      <input id="name" type="text" placeholder="Your name" maxlength="60" autocomplete="name">
-      <button id="rsvp-btn">RSVP</button>
+      <div class="event-card">
+        <p class="brand">COM1 foyer · night before finals</p>
+        <h1>🧋 Study Break Night</h1>
+        <p>Free bubble tea + snacks!<br>🕖 7pm to 9pm</p>
+        <input id="name" type="text" placeholder="Your name" maxlength="60" autocomplete="name">
+        <button id="rsvp-btn">RSVP</button>
+        <p class="note">RSVP helps us order enough food. Cups are first come, first served at the door (150 only).</p>
+      </div>
       <div class="msg" id="rsvp-msg" aria-live="polite"></div>
-      <p style="font-size:14px;color:#555">RSVP helps us order enough food. Cups are first come first served at the door (150 only).</p>
     </section>
 
     <section id="confirmation-view" class="hidden">
-      <h1>✅ RSVP confirmed</h1>
+      <p class="brand">Study Break Night</p>
+      <h1>✅ You’re on the list</h1>
       <div class="success">
         <p><strong id="confirmation-name">You’re on the list!</strong></p>
         <p>See you at the COM1 foyer from 7pm to 9pm.</p>
       </div>
-      <p>Cups are first come, first served. Your RSVP helps us estimate how much food to order, but it does not reserve a cup.</p>
+      <p class="note">Cups are first come, first served. Your RSVP helps us estimate how much food to order, but it does not reserve a cup.</p>
       <button id="another-rsvp-btn">RSVP someone else</button>
     </section>
 
