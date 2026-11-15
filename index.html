@@ -236,7 +236,9 @@
           minute: "2-digit"
         });
         const type = person.rsvp_id === null ? "Walk-in" : "RSVP'd";
-        const cup = person.received_cup ? "Cup given" : "No cup";
+        const cup = person.cup_number !== null && person.cup_number !== undefined
+          ? "Cup #" + person.cup_number
+          : "No cup";
         return `<div class="check-in-row">
           <strong>${escapeHtml(person.name)}</strong>
           <div class="check-in-meta">${type} · ${cup} · ${time}</div>
